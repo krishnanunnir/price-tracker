@@ -64,7 +64,7 @@ def main():
     logger.info("Completed main function")
 
 
-schedule.every(1).minutes.do(main)
+schedule.every(5).minutes.do(main)
 
 logger.info("Starting main loop")
 while True:
