@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,6 +8,9 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from webdriver_manager.firefox import GeckoDriverManager
 import logging
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -44,9 +49,15 @@ def fetch_page_content_for_urls(urls):
 def setup_driver():
     firefox_options = FirefoxOptions()
     firefox_options.add_argument("--headless")
-    return webdriver.Firefox(
-        service=FirefoxService(GeckoDriverManager().install()), options=firefox_options
-    )
+
+    geckodriver_path = os.getenv("GECKODRIVER_PATH")
+
+    if geckodriver_path:
+        service = FirefoxService(executable_path=geckodriver_path)
+    else:
+        service = FirefoxService(GeckoDriverManager().install())
+
+    return webdriver.Firefox(service=service, options=firefox_options)
 
 
 def get_page_elements(url):
