@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from typing import List
 
 import requests
 import schedule
@@ -9,7 +8,7 @@ from dotenv import load_dotenv
 
 from ai_magic import get_response
 from fetch_url import fetch_page_content_for_urls
-from supabse import get_urls
+from supabse import get_products
 
 load_dotenv()
 
@@ -46,25 +45,25 @@ def send_telegram_message(text):
     return response.json()
 
 
-def handle_url(urls: List[str]):
+def handle_url():
+    products = get_products()
+    urls = [product["url"] for product in products if "url" in product]
+    url_map = {
+        product["url"]: product["target_price"]
+        for product in products
+        if "url" and "target_price" in product
+    }
     logger.info(f"Handling {len(urls)} URLs")
     results = get_data(urls)
     for i, x in enumerate(results):
         logger.info(f"Sending message for item {i+1}/{len(results)}")
-        message = f" [{x.name}]({x.url}) {x.price}"
-        send_telegram_message(message)
+        if url_map.get(x.url, None) is None or url_map[x.url] > x.price:
+            message = f" [{x.name}]({x.url}) {x.price}"
+            send_telegram_message(message)
     logger.info("Finished handling URLs")
 
 
-def main():
-    logger.info("Starting main function")
-    urls = get_urls()
-    logger.info(f"Retrieved {len(urls)} URLs")
-    handle_url(urls=urls)
-    logger.info("Completed main function")
-
-
-schedule.every(5).minutes.do(main)
+schedule.every(5).minutes.do(handle_url)
 
 logger.info("Starting main loop")
 while True:
