@@ -12,11 +12,6 @@ import logging
 # Load environment variables from .env file
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 
 def fetch_page_content_for_urls(urls):
     contents = []

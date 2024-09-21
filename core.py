@@ -20,7 +20,7 @@ chat_id = os.getenv("TELEGRAM_CHAT_ID")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()],  # This handler will log to the console
+    filename="error.log",
 )
 logger = logging.getLogger(__name__)
 
