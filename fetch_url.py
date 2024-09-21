@@ -2,8 +2,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from webdriver_manager.firefox import GeckoDriverManager
 import logging
-from selenium.webdriver.chrome.options import Options
 
 # Configure logging
 logging.basicConfig(
@@ -11,77 +13,46 @@ logging.basicConfig(
 )
 
 
-def fetch_page_content(url):
-    from bs4 import BeautifulSoup as bs
-
-    chrome_options = Options()
-
-    chrome_options.add_argument("--headless=new")  # for Chrome >= 109
-    driver = webdriver.Chrome(options=chrome_options)
-    driver.get(url)
-    content = ""
-
-    try:
-        # Wait for the page to load
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-
-        # Get the page source
-        html_content = driver.page_source
-
-        # Parse HTML and extract text without tags
-        content = bs(html_content, "lxml").text
-        content = f"url: {url} {content}"
-
-    except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
-    finally:
-        driver.quit()
-
-    return content
-
-
 def fetch_page_content_for_urls(urls):
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from bs4 import BeautifulSoup as bs
-
     contents = []
-    chrome_options = Options()
-
-    chrome_options.add_argument("--headless=new")  # for Chrome >= 109
-    driver = webdriver.Chrome(options=chrome_options)
+    driver = setup_driver()
 
     try:
         for url in urls:
             driver.get(url)
-            tag = "body"
-            by_content = By.TAG_NAME
-            if "amazon" in url:
-                tag = "centerCol"
-                by_content = By.ID
-            elif "flipkart" in url:
-                tag = "C7fEHH"
-                by_content = By.CLASS_NAME
-            # Wait for the page to load
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((by_content, tag))
-            )
+            elements = get_page_elements(url)
+            content_parts = []
+            for tag, by_content in elements:
+                try:
+                    element = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((by_content, tag))
+                    )
+                    content_parts.append(element.text)
+                except Exception as e:
+                    logging.error(f"Error extracting content from {tag}: {str(e)}")
 
-            # Get the page source
-            html_content = driver.page_source
-
-            # Parse HTML and extract text without tags
-            content = bs(html_content, "lxml").text
-            content = f"url: {url} {content}"
+            content = f"url: {url}\n" + "\n".join(content_parts)
             contents.append(content)
-
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
     finally:
         driver.quit()
 
     return contents
+
+
+def setup_driver():
+    firefox_options = FirefoxOptions()
+    firefox_options.add_argument("--headless")
+    return webdriver.Firefox(
+        service=FirefoxService(GeckoDriverManager().install()), options=firefox_options
+    )
+
+
+def get_page_elements(url):
+    if "amazon" in url:
+        return [("apex_desktop", By.ID), ("title_feature_div", By.ID)]
+    elif "flipkart" in url:
+        return [("C7fEHH", By.CLASS_NAME)]
+    else:
+        return [("body", By.TAG_NAME)]
