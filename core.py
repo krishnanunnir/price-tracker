@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import subprocess
 
 import requests
 import schedule
@@ -63,8 +64,28 @@ def handle_url():
     logger.info("Finished handling URLs")
 
 
+def get_git_info():
+    try:
+        # Get the current commit hash
+        hash_command = ["git", "rev-parse", "HEAD"]
+        git_hash = subprocess.check_output(hash_command).decode("ascii").strip()
+
+        # Get the latest commit message
+        message_command = ["git", "log", "-1", "--pretty=%B"]
+        commit_message = (
+            subprocess.check_output(message_command).decode("ascii").strip()
+        )
+
+        return git_hash, commit_message
+    except subprocess.CalledProcessError:
+        return "Git info unavailable", "Git info unavailable"
+
+
 schedule.every(5).minutes.do(handle_url)
 
+git_hash, commit_message = get_git_info()
+logger.info(f"Current Git hash: {git_hash}")
+logger.info(f"Latest commit message: {commit_message}")
 logger.info("Starting main loop")
 while True:
     schedule.run_pending()
