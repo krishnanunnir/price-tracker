@@ -8,4 +8,3 @@ class ProductInfo(BaseModel):
     unique_identifier: Optional[str] = Field(
         description="unique identifier to denote the proudct"
     )
-    url: str = Field(description="url for the product")
