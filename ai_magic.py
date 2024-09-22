@@ -1,19 +1,9 @@
-from pydantic import BaseModel, Field
 from openai import OpenAI
 from dotenv import load_dotenv
-from typing import Optional
+from type import ProductInfo
 
 # Load environment variables from .env file
 load_dotenv()
-
-
-class ProductInfo(BaseModel):
-    name: str = Field(description="The full name of the product")
-    price: float = Field(description="The current selling price of the product")
-    unique_identifier: Optional[str] = Field(
-        description="unique identifier to denote the proudct"
-    )
-    url: str = Field(description="url for the product")
 
 
 client = OpenAI()
